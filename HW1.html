@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#info {
+  position: absolute;
+  top: 2%;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ffff00
+}
+
+body {
+  overflow: hidden;
+}
+
+
+</style>
+</head>
+
+<body> 
+<div id="info">
+  <br/>
+  <button id="toggle" style="width:20%">Toggle Turn</button>
+  <button id="analog" style="width:20%">Analog </button>
+  <button id="sector" style="width:20%">Sector </button>
+  <button id="quartz" style="width:20%">Quartz </button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r70/three.min.js"></script>
+<script src="https://dl.dropboxusercontent.com/u/3587259/Code/Threejs/OrbitControls.js"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+
+<script>
+
+var scene, renderer, camera;
+var controls;
+var angle = 0,
+  turn = false;
+var run;
+var clock =new THREE.Clock();
+var clock2 = new THREE.Clock();
+var an = true, se = false, qu = false;
+var count = 0, min = 0;
+var other = null, sech;
+
+init();
+animate();
+
+$("#toggle").click(function() {
+  turn = !turn;
+});
+
+$("#analog").click(function() {
+  an = true;
+  se = false;
+  qu = false;
+});
+$("#sector").click(function() {
+  an = false;
+  se = true;
+  qu = false;
+});
+$("#quartz").click(function() {
+  an = false;
+  se = false;
+  qu = true;
+});
+
+function init() {
+  scene = new THREE.Scene();
+  renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x668833);
+  document.body.appendChild(renderer.domElement);
+
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+  camera.position.z = 70;
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+	
+  ///////////////////////////////////
+  
+  run = new THREE.Object3D();
+  
+  var clockcoat = new THREE.Mesh(new THREE.TorusGeometry(15, 2, 4, 200, 6.3), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+  scene.add(clockcoat);
+  
+  var clockback = new THREE.Mesh(new THREE.CylinderGeometry(13, 13, 1, 64, 1, false, 6, 6.3), new THREE.MeshBasicMaterial( {color: 0xffffff} ));
+  clockback.rotation.x = Math.PI/2;
+  scene.add(clockback);
+  
+  var point = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.5, 64, 1, false, 1, 6.3), new THREE.MeshBasicMaterial( {color: 0x000000} ));
+  point.rotation.x = Math.PI /2;
+  point.position.z = 1;
+  scene.add(point);
+  
+  var twl = new THREE.Mesh(new THREE.BoxGeometry(1.5, 3, 0.2), new THREE.MeshBasicMaterial( {color: 0x880000} ));
+  twl.position.y = 11.5;
+  twl.position.z = 0.5;
+  scene.add(twl);
+  
+  S();
+  
+  //////////////////////////////////
+  
+  window.addEventListener('resize', onWindowResize, false);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function S(){
+	sech = new THREE.Mesh(new THREE.BoxGeometry(0.6, 13, 0.2), new THREE.MeshBasicMaterial( {color: 0x668833} ));
+  sech.position.y = 5;
+  sech.position.z = 1;
+  scene.add(sech);
+  run.add(sech);
+  
+  scene.add(run);
+  
+  
+}
+
+function animate() {
+  controls.update();
+  
+  if(min >= 60) {
+    	angle = 0;
+      min = 0;
+    }
+  if (turn){
+  	scene.remove(other);
+    min += clock2.getDelta();
+    
+  	if(an) {
+    	scene.add(run);
+    	angle -= (clock.getDelta() * Math.PI/30);
+      run.rotation.z = angle;
+    }
+    if(se){
+    	angle -= (clock.getDelta() * Math.PI/30);
+      
+    	other = new THREE.Mesh(new THREE.RingGeometry(1, 11.5, 30, 1, 6.3-angle, angle), new THREE.MeshBasicMaterial( {color: 0x668833} ));
+      other.rotation.y = Math.PI;
+  		other.position.z = 1.5;
+      other.rotation.z = 0.5 * Math.PI;
+      scene.remove(run);
+  		scene.add(other);
+      
+    }
+    if(qu){
+    	scene.add(run);
+    	count += clock.getDelta();
+    	if(count >= 1){
+      		angle -= count * Math.PI/30;
+          count = 0;
+      }
+      run.rotation.z = angle;
+    }
+  }
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+
+</script>
+</body>
+
+</html>
