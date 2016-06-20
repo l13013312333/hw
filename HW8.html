@@ -106,7 +106,7 @@ function init()
   
   
       var sphereGeom =  new THREE.SphereGeometry( 50, 32, 16 );
-      mirrorSphereCamera = new THREE.CubeCamera( 0.1, 4000, 512 );
+      mirrorSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );
       scene.add( mirrorSphereCamera );
       var mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
       mirrorSphere = new THREE.Mesh( sphereGeom, mirrorSphereMaterial );
