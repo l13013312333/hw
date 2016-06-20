@@ -24,8 +24,6 @@ body {
 .folder .dg ul {
   margin-top: 0 !important;
 }
-
-
 </style>
 </head>
 
@@ -33,7 +31,7 @@ body {
 <div id="info">Moving Box
 <br/>
    <button id="button" style="width:8%"><img src="http://img.appleuser.com/iTunes-11-icon-1024.jpg"width="100%" height="100%"></button>
-   <button id="button2" style="width:8%"><img src="http://tw.downloadicons.net/sites/default/files/eye-70136.png"width="100%" height="100%"></button>
+   <button id="button2" style="width:8%"><img src="http://i.imgur.com/y23p7R3.png"width="100%" height="100%"></button>
    <button id="button3" style="width:8%"><img src="http://amitdanzkool.com/images/dancer2.png"width="100%" height="100%"></button>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r74/three.min.js"></script>
@@ -56,21 +54,18 @@ var leg = new THREE.Object3D();
 var hand = new THREE.Object3D();
 var all = new THREE.Object3D();
 var H, B;
-
 var art = new THREE.Object3D();
 var mvhan = new THREE.Object3D();
 var mvhanl = new THREE.Object3D();
 var mvhad = new THREE.Object3D();
 var mvleg = new THREE.Object3D();
 var mvlegl = new THREE.Object3D();
-
 var push = document.getElementById('button');
 var push2 = document.getElementById('button2');
 var push3 = document.getElementById('button3');
 var m = 1, sig = 0, move = 1;
 var angle = 0;
 var clock2 = new THREE.Clock(true);
-
 var music = function() {
 	if(m == 0) {
   	audio.play();
@@ -85,7 +80,6 @@ var music = function() {
     m = 0;
     }
 };
-
 var sight = function() {
 	if(sig == 0)   {
   	sig = 1;
@@ -94,7 +88,6 @@ var sight = function() {
     sig = 0;
     }
 };
-
 var act = function() {
 	if(move == 0) {
   	audio.play();
@@ -109,7 +102,6 @@ var act = function() {
     m = 0;
   }
 };
-
 var clock = new THREE.Clock();
 var period = 7.69;
 var pose1 = {
@@ -208,11 +200,8 @@ var pose12 = {
   alls: 0,allh: 7,allb: 0,
   ax: 0,ay: 0,az: 0
 };
-
 var dkey = [{s: 0, pose: pose1}, {s: 2/32, pose: pose2}, {s: 3/32, pose: pose3}, {s: 4/32, pose: pose1}, {s:6/32, pose: pose4},{s: 7/32, pose: pose5}, {s: 8/32, pose: pose1}, {s: 10/32, pose: pose2}, {s: 11/32, pose: pose3}, {s: 12/32, pose: pose1}, {s: 14/32, pose: pose4}, {s: 15/32, pose: pose5}, {s: 16/32, pose: pose1}, {s: 18/32, pose: pose6}, {s: 19/32, pose: pose1}, {s: 21/32, pose: pose8}, {s: 23/32, pose: pose1}, {s: 25/32, pose: pose7},  {s: 27/32, pose: pose1},  {s: 29/32, pose: pose9},  {s: 31/32, pose: pose10},  {s: 32/32, pose: pose1}];
-
 var wkey = [{s: 0, pose: pose11}, {s: 1/4, pose: pose1}, {s: 2/4, pose: pose12}, {s: 3/4, pose: pose1}, {s: 4/4, pose: pose11}];
-
 var a0 = {
 	hx:0,
   hy:0, 
@@ -234,15 +223,11 @@ var a0 = {
   ay:0, 
   az:0
  };
-
 init();
 animate();
 audio.play();
-
-
 function init() {
   scene = new THREE.Scene();
-
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
  	camera.position.set(0, 100, 200);
   scene.add(camera);
@@ -250,11 +235,9 @@ function init() {
   var gridXZ = new THREE.GridHelper(50, 10);
   gridXZ.setColors(new THREE.Color(0xff00ff), new THREE.Color(0xffffff));
   scene.add(gridXZ);
-
   renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x888888);
-
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   var light = new THREE.PointLight(0xffffff, 0.8);
   light.position.set(150, 150, 150);
@@ -315,9 +298,7 @@ function init() {
   mvlegl.position.set(-2.8, 4.5, 0);
   mvlegl.rotation.set(0, 0, 0, 'ZYX');
   all.add(mvlegl);
-
 //hand
-
 	movhanR = movethings();
   movhanR.rotation.set = (Math.PI/2, 0, 0, 'ZYX');
   mvhan.add(movhanR);
@@ -351,13 +332,11 @@ function init() {
   push3.addEventListener('click', act, false);
   
 }
-
 function movethings(){
 	art = new THREE.Mesh(new THREE.DodecahedronGeometry(2, 1), new THREE.MeshLambertMaterial({color: 0xffffff, wireframe: true}));
   
   return art;
 }
-
 function headmake(){
 	var box = [];
   
@@ -388,7 +367,6 @@ function headmake(){
   
   return head;
 }
-
 function bodymake(){
 	var box = [];
   
@@ -418,37 +396,31 @@ function bodymake(){
   
   return body;
 }
-
 function lidmake(){
 	lid = new THREE.Mesh(new THREE.PlaneGeometry(12, 5, 2.5), new THREE.MeshLambertMaterial({side:THREE.DoubleSide, color: 0xa88d6c}));
   
   return lid;
 }
-
 function lid2make(){
 	lid2 = new THREE.Mesh(new THREE.PlaneGeometry(11.5, 5, 2.5), new THREE.MeshLambertMaterial({side:THREE.DoubleSide, color: 0xa88d6c}));
   
   return lid2;
 }
-
 function legmake(){
 	leg = new THREE.Mesh(new THREE.BoxGeometry(5, 10, 11), new THREE.MeshLambertMaterial({side:THREE.DoubleSide, color: 0xa88d6c}));
   
   return leg;
 }
-
 function handmake(){
 	hand = new THREE.Mesh(new THREE.BoxGeometry(5, 12, 5), new THREE.MeshLambertMaterial({side:THREE.DoubleSide, color: 0xa88d6c}));
   
   return hand;
 }
-
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
-
 function animate() {
 	controls.update();
   
@@ -480,7 +452,6 @@ function animate() {
     var hay = (1 - tt) * dkey[i].pose.ay + tt * dkey[i + 1].pose.ay;
     var haz = (1 - tt) * dkey[i].pose.az + tt * dkey[i + 1].pose.az;
     
-
   }
   else if(move == 2) {
   	var hhx = 0;
@@ -553,7 +524,6 @@ function animate() {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
 }
-
 </script>
 </body>
 
