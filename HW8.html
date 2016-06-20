@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+
+</style>
+</head>
+
+<body> 
+<div id="ThreeJS" style="position: absolute; left:0px; top:0px"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r76/three.min.js"></script>
+<script src="https://dl.dropboxusercontent.com/u/3587259/Code/Threejs/OrbitControls.js">
+</script>
+<script src="http://stemkoski.github.io/Three.js/js/Three.js"></script>
+<script src="http://stemkoski.github.io/Three.js/js/Detector.js"></script>
+<script src="http://stemkoski.github.io/Three.js/js/Stats.js"></script>
+<script src="http://stemkoski.github.io/Three.js/js/OrbitControls.js"></script>
+<script src="http://stemkoski.github.io/Three.js/js/THREEx.KeyboardState.js"></script>
+<script src="http://stemkoski.github.io/Three.js/js/THREEx.FullScreen.js"></script>
+<script src="http://stemkoski.github.io/Three.js/js/THREEx.WindowResize.js"></script>
+<script src="http://stemkoski.github.io/Three.js/js/jquery-1.9.1.js"></script>
+<script src="http://stemkoski.github.io/Three.js/js/jquery-ui.js"></script>
+<script src="http://stemkoski.github.io/Three.js/js/info.js"></script>
+<script src="http://stemkoski.github.io/Three.js/js/Three59dev.js"></script>
+
+<script>
+var container, scene, camera, renderer, controls, stats;
+var clock = new THREE.Clock();
+var appendChild = 0;
+// custom global variables
+var mirrorCube;
+var mirrorCubeCamera; // for mirror material
+var mirrorSphere, mirrorSphereCamera; // for mirror material
+var mirrorSphere2, mirrorSphereCamera2;
+var mirrorSphere3, mirrorSphereCamera3;
+init();
+animate();
+// FUNCTIONS 		
+function init() 
+{
+	// SCENE
+	scene = new THREE.Scene();
+	// CAMERA
+	var SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight;
+	var VIEW_ANGLE = 45, ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT, NEAR = 0.1, FAR = 20000;
+	camera = new THREE.PerspectiveCamera( VIEW_ANGLE, ASPECT, NEAR, FAR);
+	scene.add(camera);
+	camera.position.set(0,150,400);
+	camera.lookAt(scene.position);	
+	// RENDERER
+	if ( Detector.webgl )
+		renderer = new THREE.WebGLRenderer( {antialias:true} );
+	else
+		renderer = new THREE.CanvasRenderer(); 
+	renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+	container = document.getElementById( 'ThreeJS' );
+	container.appendChild( renderer.domElement );
+	// EVENTS
+	THREEx.WindowResize(renderer, camera);
+	THREEx.FullScreen.bindKey({ charCode : 'm'.charCodeAt(0) });
+	// CONTROLS
+	controls = new THREE.OrbitControls( camera, renderer.domElement );
+	// STATS
+	stats = new Stats();
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.bottom = '0px';
+	stats.domElement.style.zIndex = 100;
+	container.appendChild( stats.domElement );
+	// LIGHT
+	var light = new THREE.PointLight(0xffffff);
+	light.position.set(0,250,0);
+	scene.add(light);
+	
+	// SKYBOX/FOG
+	var materialArray = [];
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'http://i.imgur.com/0P3fRjw.png' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'http://i.imgur.com/csGLo4k.png' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'http://i.imgur.com/oCfxJbj.png' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'http://i.imgur.com/gQtNNzz.png' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'http://i.imgur.com/zrYFzeY.png' ) }));
+	materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'http://i.imgur.com/pS8FY7d.png' ) }));
+	for (var i = 0; i < 6; i++)
+	   materialArray[i].side = THREE.BackSide;
+	var skyboxMaterial = new THREE.MeshFaceMaterial( materialArray );
+	var skyboxGeom = new THREE.CubeGeometry( 5000, 5000, 5000, 1, 1, 1 );
+	var skybox = new THREE.Mesh( skyboxGeom, skyboxMaterial );
+	scene.add( skybox );	
+	
+	////////////
+	// CUSTOM //
+	////////////
+	
+      var cubeGeom = new THREE.CubeGeometry(10, 100, 200, 1, 1, 1);
+      mirrorCubeCamera = new THREE.CubeCamera( 0.1, 5000, 512 );
+      // mirrorCubeCamera.renderTarget.minFilter = THREE.LinearMipMapLinearFilter;
+      scene.add( mirrorCubeCamera );
+
+      var mirrorCubeMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorCubeCamera.renderTarget } );
+      mirrorCube = new THREE.Mesh( cubeGeom, mirrorCubeMaterial );
+      mirrorCube.position.set(-75,50,0);
+      mirrorCubeCamera.position = mirrorCube.position;
+      scene.add(mirrorCube);	
+	
+  
+  
+      var sphereGeom =  new THREE.SphereGeometry( 50, 32, 16 );
+      mirrorSphereCamera = new THREE.CubeCamera( 0.1, 4000, 512 );
+      scene.add( mirrorSphereCamera );
+      var mirrorSphereMaterial = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera.renderTarget } );
+      mirrorSphere = new THREE.Mesh( sphereGeom, mirrorSphereMaterial );
+      mirrorSphere.position.set(200,50,0);
+      mirrorSphereCamera.position = mirrorSphere.position;
+      scene.add(mirrorSphere);
+      
+      var sphereGeom2 =  new THREE.SphereGeometry( 15, 32, 16 );
+      mirrorSphereCamera2 = new THREE.CubeCamera( 0.1, 5000, 512 );
+      scene.add( mirrorSphereCamera2 );
+      var mirrorSphereMaterial2 = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera2.renderTarget } );
+      mirrorSphere2 = new THREE.Mesh( sphereGeom2, mirrorSphereMaterial2 );
+      mirrorSphere2.position.set(50,10,50);
+      mirrorSphereCamera2.position = mirrorSphere2.position;
+      scene.add(mirrorSphere2);
+      
+      var sphereGeom3 =  new THREE.SphereGeometry( 20, 32, 16 );
+      mirrorSphereCamera3 = new THREE.CubeCamera( 0.1, 5000, 512 );
+      scene.add( mirrorSphereCamera3 );
+      var mirrorSphereMaterial3 = new THREE.MeshBasicMaterial( { envMap: mirrorSphereCamera3.renderTarget } );
+      mirrorSphere3 = new THREE.Mesh( sphereGeom3, mirrorSphereMaterial3 );
+      mirrorSphere3.position.set(100,0,-20);
+      mirrorSphereCamera3.position = mirrorSphere3.position;
+      scene.add(mirrorSphere3);
+}
+function animate() 
+{
+    requestAnimationFrame( animate );
+	render();		
+	update();
+}
+function update()
+{
+	controls.update();
+	stats.update();
+}
+function render() 
+{
+	mirrorCube.visible = false;
+	mirrorCubeCamera.updateCubeMap( renderer, scene );
+	mirrorCube.visible = true;
+	mirrorSphere.visible = false;
+	mirrorSphereCamera.updateCubeMap( renderer, scene );
+	mirrorSphere.visible = true;
+  mirrorSphere2.visible = false;
+	mirrorSphereCamera2.updateCubeMap( renderer, scene );
+	mirrorSphere2.visible = true;
+  mirrorSphere3.visible = false;
+	mirrorSphereCamera3.updateCubeMap( renderer, scene );
+	mirrorSphere3.visible = true;
+	
+	renderer.render( scene, camera );
+}
+
+</script>
+</body>
+
+</html>
