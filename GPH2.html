@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+	body {
+		overflow: hidden;
+	}
+</style>
+</head>
+
+<body> 
+	<div>
+	左右鍵方向、空白跳躍、Z鍵停下
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r70/three.min.js"></script>
+	<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script>
+	var camera, scene, renderer;
+var keyboard = new KeyboardState();
+var ballX = -20;
+var ball;
+var clock = new THREE.Clock();
+var onFloor;
+var pos, vel, force;
+var m = 1;
+
+init();
+animate();
+
+function init() {
+  renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+	pos = new THREE.Vector3(0,-30,0);
+	vel = new THREE.Vector3();
+	force = new THREE.Vector3();
+  
+	scene = new THREE.Scene();
+  camera = new THREE.OrthographicCamera(-50, 50, 50, -50, -10, 100);
+  camera.position.z = 10;
+  scene.add(camera);
+  window.addEventListener('resize', onWindowResize, false);
+
+  ///////////////////////////////////////////////////////////////
+  THREE.ImageUtils.crossOrigin = '';
+  texture = THREE.ImageUtils.loadTexture('https://4.bp.blogspot.com/-_fmeCF5NvKw/VsXrxzAQT2I/AAAAAAABV9A/Eqav8lFLwdE/s1600/20160218_01.jpg');
+  
+	var back = new THREE.Mesh(new THREE.PlaneGeometry(100, 100),
+  	new THREE.MeshBasicMaterial({map: texture}));
+
+	for (var i = 0;i < 4;i++) {
+		var backi = back.clone();
+  	scene.add (backi);
+    backi.position.x += 100*i;
+  
+  }
+  
+  var floor = new THREE.Mesh (new THREE.PlaneGeometry(400,50), new THREE.MeshBasicMaterial({color:0xaddddd}));
+  scene.add (floor);
+  floor.position.y = -65;
+  floor.position.x = 150;
+  
+  ball = new THREE.Mesh (new THREE.CircleGeometry (10,20), new THREE.MeshBasicMaterial({color:0x123456}));
+  scene.add (ball);
+  ball.position.y = -30;
+  
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+
+function myClamp (x, xlo, xhi) {
+	if (x < xlo) return xlo;
+  if (x > xhi) return xhi;
+  return x;
+}
+
+function animate() {
+
+  onFloor = false;
+  if (pos.y < -30) {
+    pos.y = -30;
+    vel.y *= -0.1;//彈性  
+  }
+  if (pos.y <= -30) {
+  	onFloor = true;
+    force.add(new THREE.Vector3(0, 30, 0));
+  }
+ 
+  
+  keyboard.update();
+  if (onFloor) {
+  if (keyboard.down("space")) {
+		vel.y += 25;
+  }
+	if (keyboard.down("right")) {
+  	vel.x = 15;
+  } else if (keyboard.down("left")) {
+  	vel.x = -15;
+  } else if (keyboard.down("Z")) {
+  	vel.x = 0;
+  }
+	}  
+
+	var dt = clock.getDelta();
+  force.set(0, -30, 0);
+
+  vel.add(force.clone().multiplyScalar(1. / m * dt));
+  pos.add(vel.clone().multiplyScalar(dt));
+
+	ball.position.copy (pos);
+  ballX = ball.position.x;
+  
+  //
+  var T = 0;//位置
+  var d = ballX - camera.position.x;
+  if (d > T) 
+  	camera.position.x += (d - T);
+  if (d < -T) 
+  	camera.position.x -= Math.abs(d)-T;
+  camera.position.x = myClamp (camera.position.x, 0, 300);
+  
+  requestAnimationFrame(animate);
+  render();
+}
+
+function render() {
+  renderer.render(scene, camera);
+}
+window.focus();
+
+</script>
+</body>
+
+</html>
