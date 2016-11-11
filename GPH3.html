@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+	body {
+		overflow: hidden;
+	}
+</style>
+</head>
+
+<body> 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r70/three.min.js"></script>
+	<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  左右鍵方向、空白跳躍、Z鍵停下
+  
+  <audio id="collisionsound" style="display:none">
+	<source src="http://l13013312333.github.io/hw/sounds/yep.mp3" type='audio/mp3'>
+	</audio>
+
+	<audio id="soundtrack" autoplay loop style="display:none">
+	<source src="http://l13013312333.github.io/hw/sounds/op.mp3" type='audio/mp3'>
+	</audio>
+
+<script>
+	var camera, scene, renderer;
+var keyboard = new KeyboardState();
+var ballX = -20;
+var ballR = 3;
+var ball, ro;
+var clock = new THREE.Clock();
+var onFloor;
+var pos, vel, force;
+var m = 1;
+var turn = 0;
+
+var stArray = [];
+var baseS = 0;
+var counter = 0;
+var collisionsound, soundTrack;
+
+init();
+animate();
+
+
+function height(x) {
+  if (x < 50) return -25;
+  else if(x < 52)return -10;
+  else if(x < 150)return -25;
+  else if (x<152)return -10;
+  else if(x < 250)return -25;
+  else if (x<252)return -10;
+  else if (x < 350) return -25;
+}
+
+function init() {
+
+	collisionSound = document.getElementById ('collisionsound');
+	soundTrack = document.getElementById ('soundtrack');
+	
+
+////////////////////////////////////////
+  renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+	pos = new THREE.Vector3(0,-30,0);
+	vel = new THREE.Vector3();
+	force = new THREE.Vector3();
+  
+	scene = new THREE.Scene();
+  camera = new THREE.OrthographicCamera(-50, 50, 50, -50, -10, 100);
+  camera.position.z = 10;
+  scene.add(camera);
+  window.addEventListener('resize', onWindowResize, false);
+
+  ///////////////////////////////////////////////////////////////
+  THREE.ImageUtils.crossOrigin = '';
+  texture = THREE.ImageUtils.loadTexture('https://4.bp.blogspot.com/-_fmeCF5NvKw/VsXrxzAQT2I/AAAAAAABV9A/Eqav8lFLwdE/s1600/20160218_01.jpg');
+  
+	var back = new THREE.Mesh(new THREE.PlaneGeometry(100, 100),
+  	new THREE.MeshBasicMaterial({map: texture}));
+
+	for (var i = 0;i < 4;i++) {
+		var backi = back.clone();
+  	scene.add (backi);
+    backi.position.x += 100*i;
+  
+  }
+  
+  var floor = new THREE.Mesh (new THREE.PlaneGeometry(400,50), new THREE.MeshBasicMaterial({color:0xaddddd}));
+  scene.add (floor);
+  floor.position.y = -58;
+  floor.position.x = 150;
+  
+  /////////////////////////////////////
+  setUpStArray0();
+
+  // loading texture from imgur.com
+  THREE.ImageUtils.crossOrigin = '';
+  texture = THREE.ImageUtils.loadTexture('http://i.imgur.com/AWxc0hj.png');
+  texture.wrapS = THREE.RepeatWrapping;
+
+  // setting up texMat
+  var texMat = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+
+  geometry = new THREE.Geometry();
+  geometry.vertices.push(
+    new THREE.Vector3(-15, -15, 0),
+    new THREE.Vector3(15, -15, 0),
+    new THREE.Vector3(15, 15, 0),
+    new THREE.Vector3(-15, 15, 0)
+  );
+
+  var face;
+  face = new THREE.Face3(0, 1, 2);
+  geometry.faces.push(face);
+  face = new THREE.Face3(0, 2, 3);
+  geometry.faces.push(face);
+
+  geometry.faceVertexUvs[0].push([stArray[1][0], stArray[1][1], stArray[0][1]]);
+  geometry.faceVertexUvs[0].push([stArray[1][0], stArray[0][1], stArray[0][0]]);
+
+  geometry.computeBoundingSphere();
+  geometry.computeFaceNormals();
+  geometry.computeVertexNormals();
+
+  ball = new THREE.Mesh(geometry, texMat);
+  scene.add(ball);
+  ball.position.y = -30;
+  /////////////////////////////////////////////
+  THREE.ImageUtils.crossOrigin = '';
+  texture2 = THREE.ImageUtils.loadTexture('http://i.imgur.com/4Kb9vdx.png');
+  texture2.wrapS = THREE.RepeatWrapping;
+  
+	var ro = new THREE.Mesh(new THREE.PlaneGeometry(10, 14),
+  	new THREE.MeshBasicMaterial({ map: texture2,
+    transparent: true,
+    side: THREE.DoubleSide}));
+	scene.add(ro);
+  ro.position.x = 50;
+  ro.position.y = -30;
+  
+  var ro2 = ro.clone();
+  scene.add(ro2);
+  ro2.position.x = 150;
+  ro2.position.y = -30;
+  
+  var ro3 = ro.clone();
+  scene.add(ro3);
+  ro3.position.x = 250;
+  ro3.position.y = -30;
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+
+function myClamp (x, xlo, xhi) {
+	if (x < xlo) return xlo;
+  if (x > xhi) return xhi;
+  return x;
+}
+
+function animate() {
+	console.log(pos.x);
+
+	 counter++;
+
+  if (counter % 8 === 0)
+    spriteAnimate();
+
+//
+  onFloor = false;
+  if (pos.y < height(pos.x) + ballR) {
+    pos.y = height(pos.x) + ballR;
+    vel.y *= -0.1;//彈性  
+  }
+  
+  if (pos.y <= height(pos.x) + ballR) { // && pos.x < 10) {
+    onFloor = true;
+    force.add(new THREE.Vector3(0, 20, 0)); // contact force
+  }
+  if (vel.x > 0) {
+    if (height(pos.x + ballR) > pos.y) vel.x = 0;
+  } else if (vel.x < 0) {
+    if (height(pos.x - ballR) > pos.y) vel.x = 0;
+  }
+  
+  if(vel.x == 0){
+  	if(turn == 1) setUpStArray00();
+  		else setUpStArray0();
+  }
+  //
+ if(pos.x <= -45) pos.x = -45;
+  else if (pos.x >= 345) pos.x = 345;
+  
+  
+  keyboard.update();
+  if (onFloor) {
+  if (keyboard.down("space")) {
+		vel.y += 35;
+    collisionSound.play();
+  }
+	if (keyboard.down("right")) {
+  	turn = 0;
+  	setUpStArray();
+  	vel.x = 30;
+  } else if (keyboard.down("left")) {
+  	turn = 1;
+  	setUpStArray2();
+  	vel.x = -30;
+  } else if (keyboard.down("Z")) {
+  		if(turn == 1) setUpStArray00();
+  		else setUpStArray0();
+  	vel.x = 0;
+  }
+	}  
+
+	var dt = clock.getDelta();
+  force.set(0, -30, 0);
+
+  vel.add(force.clone().multiplyScalar(1. / m * dt));
+  pos.add(vel.clone().multiplyScalar(dt));
+
+	ball.position.copy (pos);
+  ballX = ball.position.x;
+  
+  //
+  var T = 0;//位置
+  var d = ballX - camera.position.x;
+  if (d > T) 
+  	camera.position.x += (d - T);
+  if (d < -T) 
+  	camera.position.x -= Math.abs(d)-T;
+  camera.position.x = myClamp (camera.position.x, 0, 300);
+  
+  requestAnimationFrame(animate);
+  render();
+}
+
+function render() {
+  renderer.render(scene, camera);
+}
+
+function setUpStArray() {
+		mod = 3;
+		stArray = [];
+		var row = [];
+		row.push(new THREE.Vector2(0 * (1/3), 1-1*0));
+		row.push(new THREE.Vector2(1 * (1/3), 1-1*0));
+		row.push(new THREE.Vector2(2 * (1/3), 1-1*0));
+		row.push(new THREE.Vector2(3 * (1/3), 1-1*0));
+    stArray.push(row);
+    
+    var row = [];
+    row.push(new THREE.Vector2(0 * (1/3), 1-1*1));
+		row.push(new THREE.Vector2(1 * (1/3), 1-1*1));
+		row.push(new THREE.Vector2(2 * (1/3), 1-1*1));
+		row.push(new THREE.Vector2(3 * (1/3), 1-1*1));
+		stArray.push(row);
+	
+	
+}
+
+function setUpStArray2() {
+		mod = 3;
+		stArray = [];
+		var row = [];
+		row.push(new THREE.Vector2(3 * (1/3), 1-1*0));
+		row.push(new THREE.Vector2(2 * (1/3), 1-1*0));
+		row.push(new THREE.Vector2(1 * (1/3), 1-1*0));
+		row.push(new THREE.Vector2(0 * (1/3), 1-1*0));
+    stArray.push(row);
+    
+    var row = [];
+    row.push(new THREE.Vector2(3 * (1/3), 1-1*1));
+		row.push(new THREE.Vector2(2 * (1/3), 1-1*1));
+		row.push(new THREE.Vector2(1 * (1/3), 1-1*1));
+		row.push(new THREE.Vector2(0 * (1/3), 1-1*1));
+		stArray.push(row);
+	
+}
+
+function setUpStArray0() {
+	
+		stArray = [];
+		mod = 1;
+		var row = [];
+		
+		row.push(new THREE.Vector2(1 * (1/3), 1-1*0));
+		row.push(new THREE.Vector2(2 * (1/3), 1-1*0));
+		
+    stArray.push(row);
+    
+    var row = [];
+    row.push(new THREE.Vector2(1 * (1/3), 1-1*1));
+		row.push(new THREE.Vector2(2 * (1/3), 1-1*1));
+		stArray.push(row);
+	
+}
+
+function setUpStArray00() {
+	
+		stArray = [];
+		mod = 1;
+		var row = [];
+		
+		row.push(new THREE.Vector2(2 * (1/3), 1-1*0));
+		row.push(new THREE.Vector2(1 * (1/3), 1-1*0));
+		
+    stArray.push(row);
+    
+    var row = [];
+    row.push(new THREE.Vector2(2 * (1/3), 1-1*1));
+		row.push(new THREE.Vector2(1 * (1/3), 1-1*1));
+		stArray.push(row);
+	
+}
+
+
+function spriteAnimate() {
+  var geometry = ball.geometry;
+  var st0 = stArray[1][baseS];
+  var st1 = stArray[1][baseS + 1];
+  var st2 = stArray[0][baseS + 1];
+  var st3 = stArray[0][baseS];
+
+  geometry.faceVertexUvs[0] = [];
+  geometry.faceVertexUvs[0].push([st0, st1, st2]);
+  geometry.faceVertexUvs[0].push([st0, st2, st3]);
+  geometry.uvsNeedUpdate = true;
+
+  baseS = (baseS + 1) % mod;
+}
+
+
+window.focus();
+
+
+</script>
+</body>
+
+</html>
