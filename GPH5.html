@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+	#info {
+	  position: absolute;
+	  top: 2px;
+	  width: 100%;
+	  text-align: center;
+	  color: #ffffff
+	}
+
+
+	body {
+	  overflow: hidden;
+	}
+
+</style>
+</head>
+
+<body> 
+	<div id="info">空白鍵發射(未完成)
+
+	<button id ="new" style="width:20%">新地點</button>
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r70/three.min.js"></script>
+	<script src="https://dl.dropboxusercontent.com/u/3587259/Code/Threejs/OrbitControls.js">
+	</script>
+	<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+	<script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+
+
+<script>
+	var camera, scene, renderer, light, controls;
+	var cir, move = false;
+	var keyboard = new KeyboardState();
+	var stArray=[];
+	var baseS = 0,baseT = 0;
+	var counter = 0;
+	var texMat;
+	var plane, da = 0, dt;
+	var R = Math.sqrt(5000);
+	var a, b, A;
+	var all = new THREE.Object3D();
+	var all2 = new THREE.Object3D();
+	var clock = new THREE.Clock();
+
+	init();
+	animate();
+
+	$("#new").click(function(){
+		var x = Math.floor(Math.random()*200)-100;
+	  var y = Math.floor(Math.random()*200)-100;
+		cir.position.set(x, 2.5, y);
+	  
+	  R = Math.sqrt((100-x)*(100-x)+(100-y)*(100-y))/2;
+	  all.position.set(100-(100-x)/2, 10, 100-(100-y)/2);
+	  
+	  a = (100-y);
+	  b = (100-x);
+	  A = 1/Math.tan(a/b);
+	  all.rotation.y = -A;
+	  move = false;
+	})
+
+	function setUpStArray(){
+		for(var i = 0; i < 5;i++){
+		var row = [];
+		for(var j = 0; j < 9; j++){
+			row.push(new THREE.Vector2(j*0.125, 1-0.25*i));
+		  stArray.push(row);
+		}
+	  }
+	}
+
+	function buildSprite(){
+		 var geometry = new THREE.Geometry();
+	  geometry.vertices.push(
+		new THREE.Vector3(-15, -15, 0),
+		new THREE.Vector3(15, -15, 0),
+		new THREE.Vector3(15, 15, 0),
+		new THREE.Vector3(-15, 15, 0)
+	  );
+
+	  var face;
+	  face = new THREE.Face3(0, 1, 2);
+	  geometry.faces.push(face);
+	  face = new THREE.Face3(0, 2, 3);
+	  geometry.faces.push(face);
+
+	  geometry.faceVertexUvs[0].push([stArray[1][0], stArray[1][1], stArray[0][1]]);
+	  geometry.faceVertexUvs[0].push([stArray[1][0], stArray[0][1], stArray[0][0]]);
+
+	  geometry.computeBoundingSphere();
+	  geometry.computeFaceNormals();
+	  geometry.computeVertexNormals();
+
+	  sprite = new THREE.Mesh(geometry, texMat);
+	  scene.add(sprite);
+	  
+	  console.log ('sprite added');
+	}
+
+	function buildMissile() {
+		var missile = new THREE.Object3D();
+	  var normalMat = new THREE.MeshNormalMaterial();
+		var tip = new THREE.Mesh (new THREE.CylinderGeometry (0,5,10,20), normalMat);
+	  missile.add (tip);
+	  tip.position.y = 15;
+	  var body = new THREE.Mesh (new THREE.CylinderGeometry (5,5,10,20), normalMat);
+	  missile.add (body);
+	  body.position.y = 5;
+	  
+	  var missileFrame = new THREE.Object3D();
+	  missileFrame.add (missile);
+	  
+		return missileFrame;
+	}
+
+	function init() {
+	  scene = new THREE.Scene();
+
+	  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+	  camera.position.z = 500;
+	  scene.add(camera);
+
+	  light = new THREE.PointLight(0xffffff);
+	  light.position.set(100, 300, 200);
+	  scene.add(light);
+
+	  var gridXZ = new THREE.GridHelper(100, 10);
+	  gridXZ.setColors(new THREE.Color(0xff0000), new THREE.Color(0xffffff));
+	  scene.add(gridXZ);
+
+	  renderer = new THREE.WebGLRenderer({antialias: true});
+	  renderer.setSize(window.innerWidth, window.innerHeight);
+	  renderer.setClearColor(0x888888);
+
+	  controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+	  document.body.appendChild(renderer.domElement);
+	  ////////////////////////////////////////////////////////////////////////
+	  setUpStArray();
+	  THREE.ImageUtils.crossOrigin = '';
+	  texture = THREE.ImageUtils.loadTexture('https://i.imgur.com/6ePTx6p.png');
+	  var texMat = new THREE.MeshBasicMaterial({
+		map: texture,
+		transparent: true,  // cutout texture: set transparent: true
+		side: THREE.DoubleSide
+	  });
+
+	  var geometry = new THREE.Geometry();
+	  geometry.vertices.push(
+		new THREE.Vector3(-15, -15, 0),
+		new THREE.Vector3(15, -15, 0),
+		new THREE.Vector3(15, 15, 0),
+		new THREE.Vector3(-15, 15, 0)
+	  );
+
+	  var face;
+	  face = new THREE.Face3(0, 1, 2);
+	  geometry.faces.push(face);
+	  face = new THREE.Face3(0, 2, 3);
+	  geometry.faces.push(face);
+
+	  geometry.faceVertexUvs[0].push([stArray[1][0], stArray[1][1], stArray[0][1]]);
+	  geometry.faceVertexUvs[0].push([stArray[1][0], stArray[0][1], stArray[0][0]]);
+
+	  geometry.computeBoundingSphere();
+	  geometry.computeFaceNormals();
+	  geometry.computeVertexNormals();
+
+	  sprite = new THREE.Mesh(geometry, texMat);
+	  scene.add(sprite);
+
+	  ////////////////////////////////////////////////////////////////////////
+	  cir = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, 5, 32), new THREE.MeshBasicMaterial({color:0x124564}));
+	  cir.position.y = 2.5;
+	  scene.add(cir);
+	  
+	  var start = new THREE.Mesh(new THREE.CylinderGeometry(10, 10, 5, 32), new THREE.MeshBasicMaterial({color:0xf2d5ad}));
+	  start.position.set(100, 2.5, 100);
+	  scene.add(start);
+
+	  missile = buildMissile();
+	  missile.rotation.z = Math.PI/2;
+	  missile.rotation.y = Math.PI/2;
+	  scene.add (missile);  
+	  
+	  // make the missile point to 'newDir' (world space)
+	  var newDir = new THREE.Vector3(1,1,1).normalize();
+	  var localDir = new THREE.Vector3 (1,0,0);
+
+		var axis = new THREE.Vector3();
+	  axis.crossVectors (localDir, newDir).normalize();
+	  var angle = localDir.angleTo (newDir);
+
+		//missile.rotateOnAxis (axis, angle);
+	  
+	  a = 50;
+	  b = 50;
+	  A = 1/Math.tan(a/b);
+	  
+	  all.add(missile);
+	  scene.add(all2);
+	  scene.add(all);
+	  all.position.set(50, 0, 50);
+	  
+	  all.rotation.y = -A;
+
+	  
+	}
+
+	function animate() {
+	  sprite.lookAt(camera.position);
+	  keyboard.update();
+		
+	  dt = clock.getDelta();
+	  if(move == true){
+		x = R*Math.cos(da);
+		y = R*Math.sin(da);
+		da += dt;
+
+		missile.position.set(x, 0, y);
+		missile.rotation.y -= dt;
+		
+	  }
+	  else{
+		dt = 0;
+		da = 0;
+		x = R*Math.cos(da);
+		y = R*Math.sin(da);
+		missile.rotation.y = Math.PI/2;
+		missile.position.set(x, 0, y);
+		if(keyboard.down("space")){
+			move = true;
+		}
+	  }
+		
+	  
+	  
+		
+	  controls.update();
+
+	  requestAnimationFrame(animate);
+	  render();
+	}
+
+	function spriteAnimate() {
+	  var geometry = sprite.geometry;
+	  var st0 = stArray[baseS + 1][baseT];
+	  var st1 = stArray[baseS + 1][baseT + 1];
+	  var st2 = stArray[baseS][baseT + 1];
+	  var st3 = stArray[baseS][baseT];
+
+	  geometry.faceVertexUvs[0] = [];
+	  geometry.faceVertexUvs[0].push([st0, st1, st2]);
+	  geometry.faceVertexUvs[0].push([st0, st2, st3]);
+	  geometry.uvsNeedUpdate = true;
+
+	  baseT = (baseT + 1) % 8;
+	  if (baseT === 0) {
+		baseS = (baseS + 1) % 4;
+	  }
+	}
+
+	function render() {
+	  renderer.render(scene, camera);
+	}
+	window.focus();
+
+
+
+</script>
+</body>
+
+</html>
