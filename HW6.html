@@ -21,8 +21,8 @@ body {
 <div id = 'num'>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r70/three.min.js"></script>
-<script src="https://dl.dropboxusercontent.com/u/3587259/Code/Threejs/OrbitControls.js">
-</script>
+<script src="https://threejs.org/build/three.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 
 <script id="myVertexShader" type="x-shader/x-vertex">
     uniform vec3 lightpos;  // world coordinate
@@ -64,6 +64,7 @@ body {
         gl_FragColor = vec4(kfinal + specular, 1.0);
     }
 </script>
+
 
 <script>
 
